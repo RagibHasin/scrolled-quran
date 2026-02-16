@@ -21,23 +21,12 @@ pub enum PlaceOfRevelation {
 
 pub struct ScrollingReader {
     pub surah: u8,
-    pub anchor_ayah: u16,
 
     pub jump_to_ayah: Option<u16>,
     pub is_scrolling: bool,
 }
 
 impl ScrollingReader {
-    pub fn at(surah: u8, ayah: u16) -> Self {
-        ScrollingReader {
-            surah,
-            anchor_ayah: ayah,
-
-            jump_to_ayah: Some(ayah),
-            is_scrolling: true,
-        }
-    }
-
     pub fn ayah_text(&self, ayah: u16) -> &'static str {
         data::AYAHS[if ayah == 0 {
             0
@@ -58,7 +47,7 @@ impl ScrollingReader {
 pub struct AppState {
     pub user_data: UserData,
 
-    pub reader: Option<ScrollingReader>,
+    pub reader: Option<(usize, ScrollingReader)>,
     pub showing_index: bool,
 }
 
@@ -73,11 +62,22 @@ impl AppState {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct Progress {
     pub last_on: jiff::Timestamp,
     pub surah: u8,
     pub ayah: u16,
+}
+
+impl Progress {
+    pub fn reader(self) -> ScrollingReader {
+        ScrollingReader {
+            surah: self.surah,
+
+            jump_to_ayah: Some(self.ayah.saturating_sub(1)),
+            is_scrolling: false,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -99,6 +99,10 @@ impl UserData {
         Ok(toml::from_slice::<UserData>(&std::fs::read(
             "reading.toml",
         )?)?)
+    }
+
+    pub fn save(&self) {
+        std::fs::write("reading.toml", toml::to_string_pretty(self).unwrap()).unwrap()
     }
 }
 

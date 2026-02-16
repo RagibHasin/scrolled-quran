@@ -38,6 +38,7 @@ pub fn label(label: impl Into<ArcStr>) -> Label {
         text_alignment: TextAlign::default(),
         text_size: masonry::theme::TEXT_SIZE_NORMAL,
         weight: FontWeight::NORMAL,
+        enable_hinting: true,
         line_height: LineHeight::FontSizeRelative(1.2),
         font: FontStack::Single(FontFamily::Generic(GenericFamily::SystemUi)),
     }
@@ -52,6 +53,7 @@ pub struct Label {
     text_alignment: TextAlign,
     text_size: f32,
     weight: FontWeight,
+    enable_hinting: bool,
     line_height: LineHeight,
     font: FontStack<'static>,
     // TODO: add more attributes of `masonry::widgets::Label`
@@ -74,6 +76,12 @@ impl Label {
     /// Sets font weight.
     pub fn weight(mut self, weight: FontWeight) -> Self {
         self.weight = weight;
+        self
+    }
+
+    /// Sets font weight.
+    pub fn enable_hinting(mut self, enable_hinting: bool) -> Self {
+        self.enable_hinting = enable_hinting;
         self
     }
 
@@ -114,7 +122,8 @@ impl<State: ViewArgument, Action> View<State, Action, ViewCtx> for Label {
                 .with_style(StyleProperty::FontSize(self.text_size))
                 .with_style(StyleProperty::FontWeight(self.weight))
                 .with_style(StyleProperty::LineHeight(self.line_height))
-                .with_style(StyleProperty::FontStack(self.font.clone())),
+                .with_style(StyleProperty::FontStack(self.font.clone()))
+                .with_hint(self.enable_hinting),
         );
         (pod, ())
     }
@@ -144,6 +153,9 @@ impl<State: ViewArgument, Action> View<State, Action, ViewCtx> for Label {
         }
         if prev.font != self.font {
             widgets::Label::insert_style(&mut element, StyleProperty::FontStack(self.font.clone()));
+        }
+        if prev.enable_hinting != self.enable_hinting {
+            widgets::Label::set_hint(&mut element, self.enable_hinting);
         }
     }
 
