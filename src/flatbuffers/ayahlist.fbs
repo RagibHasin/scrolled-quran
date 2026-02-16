@@ -1,5 +1,0 @@
-table AyahList {
-    ayahs:[string];
-}
-
-root_type AyahList;
