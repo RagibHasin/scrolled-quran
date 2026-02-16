@@ -2,12 +2,10 @@ use masonry::{layout::Length, parley};
 use puthi::view::virtual_hscroll;
 use xilem::{
     WidgetView,
-    core::{Edit, MessageResult, ViewArgument},
+    core::{Edit, MessageResult},
     style::{Padding, Style},
     view::{FlexExt, FlexSpacer, flex_col, flex_row, slider, text_button},
 };
-
-use crate::model::{AppState, VerseKey, digital_khatt_aba::Verse};
 
 mod label;
 pub use label::*;
@@ -18,20 +16,15 @@ const DIGITALKHATT_NEW_MADINA: parley::FontStack<'_> = parley::FontStack::Single
 
 const LINE_HEIGHT_FACTOR: f32 = 1.8;
 
-impl Verse {
-    pub fn view<State: ViewArgument + 'static>(
-        &self,
-        font_size: f32,
-    ) -> impl WidgetView<State> + use<State> {
-        label(self.text.clone())
+impl crate::model::AppState {
+    pub fn verse_view(&self, surah: u8, ayah: u16) -> impl WidgetView<Edit<Self>> + use<> {
+        label(self.ayah_text(surah, ayah))
             .font(DIGITALKHATT_NEW_MADINA.clone())
-            .text_size(font_size)
+            .text_size(self.font_size)
             .line_height(parley::LineHeight::FontSizeRelative(LINE_HEIGHT_FACTOR))
-            .padding(Padding::left(font_size as f64 * 0.3))
+            .padding(Padding::left(self.font_size as f64 * 0.3))
     }
-}
 
-impl AppState {
     pub fn logic(state: &mut Self) -> impl WidgetView<Edit<Self>> + use<> {
         // font-size: 21.75px
         // line-height: 39.1167px
@@ -42,11 +35,7 @@ impl AppState {
         flex_col((
             FlexSpacer::Flex(1.),
             virtual_hscroll(1..287, |state: &mut Self, idx| {
-                state.db[&VerseKey {
-                    ayah: idx as _,
-                    ..state.anchor_verse
-                }]
-                    .view(state.font_size)
+                state.verse_view(state.anchor_verse.surah, idx as _)
             })
             .left_to_right(false)
             .autoscroll_velocity(autoscroll_velocity)
