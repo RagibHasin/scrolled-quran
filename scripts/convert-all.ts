@@ -2,10 +2,7 @@ const ayahs_json: { [id: string]: { text: string } } = JSON.parse(
   await Deno.readTextFile("../assets/digital-khatt-v2.aba.json"),
 );
 
-const basmalah = Object.values(ayahs_json)[0]
-  .text.split(" ")
-  .slice(0, -1)
-  .join(" ");
+const basmalah = Object.values(ayahs_json)[0].text.slice(0, -1);
 const ayahs = Object.values(ayahs_json)
   .map(({ text }) => `"${text}"`)
   .join(",\n    ");
@@ -44,12 +41,12 @@ const surahs = Object.values(surahs_json)
 
 const fileText = `use crate::model::{PlaceOfRevelation::*, SurahInfo};
 
-pub const AYAHS: [&str; 6237] = [
+pub static AYAHS: [&str; 6237] = [
     "${basmalah} ",
     ${ayahs},
 ];
 
-pub const SURAHS: [SurahInfo; 115] = [
+pub static SURAHS: [SurahInfo; 115] = [
     SurahInfo {
         name_ar: "",
         name_en: "",

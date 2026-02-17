@@ -256,9 +256,9 @@ dependencies = [
 
 [[package]]
 name = "async-executor"
-version = "1.13.3"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "497c00e0fd83a72a79a39fcbd8e3e2f055d6f6c7e025f3b3d91f4f8e76527fb8"
+checksum = "c96bf972d85afc50bf5ab8fe2d54d1586b4e0b46c97c50a0c9e71e2f7bcd812a"
 dependencies = [
  "async-task",
  "concurrent-queue",
@@ -1029,9 +1029,9 @@ checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
 
 [[package]]
 name = "futures-core"
-version = "0.3.31"
+version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05f29059c0c2090612e8d742178b0580d2dc940c837851ad723096f87af6663e"
+checksum = "7e3450815272ef58cec6d564423f6e755e25379b217b0bc688e295ba24df6b1d"
 
 [[package]]
 name = "futures-intrusive"
@@ -1046,9 +1046,9 @@ dependencies = [
 
 [[package]]
 name = "futures-io"
-version = "0.3.31"
+version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e5c1b78ca4aae1ac06c48a526a655760685149f0d465d21f37abfe57ce075c6"
+checksum = "cecba35d7ad927e23624b22ad55235f2239cfa44fd10428eecbeba6d6a717718"
 
 [[package]]
 name = "futures-lite"
@@ -1065,20 +1065,19 @@ dependencies = [
 
 [[package]]
 name = "futures-task"
-version = "0.3.31"
+version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f90f7dce0722e95104fcb095585910c0977252f286e354b5e3bd38902cd99988"
+checksum = "037711b3d59c33004d3856fbdc83b99d4ff37a24768fa1be9ce3538a1cde4393"
 
 [[package]]
 name = "futures-util"
-version = "0.3.31"
+version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fa08315bb612088cc391249efdc3bc77536f16c91f6cf495e6fbe85b20a4a81"
+checksum = "389ca41296e6190b48053de0321d02a77f32f8a5d2461dd38762c0593805c6d6"
 dependencies = [
  "futures-core",
  "futures-task",
  "pin-project-lite",
- "pin-utils",
  "slab",
 ]
 
@@ -1308,7 +1307,7 @@ dependencies = [
  "byteorder-lite",
  "moxcms",
  "num-traits",
- "png 0.18.0",
+ "png 0.18.1",
 ]
 
 [[package]]
@@ -1516,7 +1515,7 @@ dependencies = [
 [[package]]
 name = "linebender_include_doc_path"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1580,7 +1579,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "accesskit",
  "dpi",
@@ -1596,7 +1595,7 @@ dependencies = [
 [[package]]
 name = "masonry_core"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "accesskit",
  "anymap3",
@@ -1621,7 +1620,7 @@ dependencies = [
 [[package]]
 name = "masonry_testing"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "accesskit_consumer",
  "futures-intrusive",
@@ -1635,7 +1634,7 @@ dependencies = [
 [[package]]
 name = "masonry_winit"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "accesskit_winit",
  "copypasta",
@@ -1663,9 +1662,9 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "memmap2"
-version = "0.9.9"
+version = "0.9.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "744133e4a0e0a658e1374cf3bf8e415c4052a15a111acd372764c55b4177d490"
+checksum = "714098028fe011992e1c3962653c96b2d578c4b4bce9036e15ff220319b1e0e3"
 dependencies = [
  "libc",
 ]
@@ -2231,12 +2230,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
 
 [[package]]
-name = "pin-utils"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
-
-[[package]]
 name = "piper"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2268,9 +2261,9 @@ dependencies = [
 
 [[package]]
 name = "png"
-version = "0.18.0"
+version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97baced388464909d42d89643fe4361939af9b7ce7a31ee32a168f832a70f2a0"
+checksum = "60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61"
 dependencies = [
  "bitflags 2.11.0",
  "crc32fast",
@@ -2359,18 +2352,6 @@ name = "profiling"
 version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eb8486b569e12e2c32ad3e204dbaba5e4b5b216e9367044f25f1dba42341773"
-
-[[package]]
-name = "puthi"
-version = "0.1.0"
-dependencies = [
- "accesskit",
- "color",
- "masonry",
- "masonry_winit",
- "tracing",
- "xilem",
-]
 
 [[package]]
 name = "pxfm"
@@ -2588,7 +2569,6 @@ dependencies = [
  "jiff",
  "masonry",
  "masonry_winit",
- "puthi",
  "serde",
  "serde_json",
  "toml",
@@ -2872,9 +2852,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.115"
+version = "2.0.116"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e614ed320ac28113fa64972c4262d5dbc89deacdfd00c34a3e4cea073243c12"
+checksum = "3df424c70518695237746f84cede799c9c58fcb37450d7b23716568cc8bc69cb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3212,7 +3192,7 @@ dependencies = [
 [[package]]
 name = "tree_arena"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "hashbrown 0.16.1",
 ]
@@ -3258,9 +3238,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.23"
+version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "537dd038a89878be9b64dd4bd1b260315c1bb94f4d784956b81e27a088d9a09e"
+checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
 
 [[package]]
 name = "unicode-segmentation"
@@ -4439,7 +4419,7 @@ checksum = "bec9e4a500ca8864c5b47b8b482a73d62e4237670e5b5f1d6b9e3cae50f28f2b"
 [[package]]
 name = "xilem"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "masonry",
  "masonry_winit",
@@ -4454,7 +4434,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "anymore",
  "hashbrown 0.16.1",
@@ -4464,7 +4444,7 @@ dependencies = [
 [[package]]
 name = "xilem_masonry"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git#5281ffb308732b00f42e0755c6095b6ae234ae16"
+source = "git+https://github.com/linebender/xilem.git#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
 dependencies = [
  "masonry",
  "tokio",

@@ -1,7 +1,7 @@
 use crate::model::{PlaceOfRevelation::*, SurahInfo};
 
-pub const AYAHS: [&str; 6237] = [
-    "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ",
+pub static AYAHS: [&str; 6237] = [
+    "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ۝ ",
     "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ۝١",
     "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ ۝٢",
     "ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ۝٣",
@@ -6240,7 +6240,7 @@ pub const AYAHS: [&str; 6237] = [
     "مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ ۝٦",
 ];
 
-pub const SURAHS: [SurahInfo; 115] = [
+pub static SURAHS: [SurahInfo; 115] = [
     SurahInfo {
         name_ar: "",
         name_en: "",

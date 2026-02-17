@@ -1,3 +1,4 @@
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
 #[path = "data.rs"]
@@ -36,7 +37,7 @@ impl ScrollingReader {
     }
 
     pub fn ayah_range(&self) -> std::ops::Range<i64> {
-        (!self.has_basmalah() as _)..(data::SURAHS[self.surah as usize].ayahs as _)
+        (!self.has_basmalah() as _)..(data::SURAHS[self.surah as usize].ayahs + 1) as _
     }
 
     pub fn has_basmalah(&self) -> bool {
@@ -49,6 +50,7 @@ pub struct AppState {
 
     pub reader: Option<(usize, ScrollingReader)>,
     pub showing_index: bool,
+    pub viewport_width: f64,
 }
 
 impl AppState {
@@ -58,18 +60,27 @@ impl AppState {
 
             reader: None,
             showing_index: true,
+            viewport_width: 1000.,
         }
     }
 }
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct Progress {
-    pub last_on: jiff::Timestamp,
-    pub surah: u8,
-    pub ayah: u16,
+    last_on: Timestamp,
+    surah: u8,
+    ayah: u16,
 }
 
 impl Progress {
+    pub fn new(surah: u8) -> Self {
+        Progress {
+            last_on: Timestamp::now(),
+            surah,
+            ayah: 0,
+        }
+    }
+
     pub fn reader(self) -> ScrollingReader {
         ScrollingReader {
             surah: self.surah,
@@ -77,6 +88,22 @@ impl Progress {
             jump_to_ayah: Some(self.ayah.saturating_sub(1)),
             is_scrolling: false,
         }
+    }
+
+    pub fn last_on(&self) -> Timestamp {
+        self.last_on
+    }
+
+    pub fn surah(&self) -> u8 {
+        self.surah
+    }
+
+    pub fn ayah(&self) -> u16 {
+        self.ayah
+    }
+
+    pub fn set_ayah(&mut self, ayah: u16) {
+        self.ayah = ayah;
     }
 }
 
@@ -115,12 +142,12 @@ fn gen_sample_progress() {
         },
         progress: vec![
             Progress {
-                last_on: jiff::Timestamp::now(),
+                last_on: Timestamp::now(),
                 surah: 2,
                 ayah: 69,
             },
             Progress {
-                last_on: jiff::Timestamp::now(),
+                last_on: Timestamp::now(),
                 surah: 54,
                 ayah: 19,
             },

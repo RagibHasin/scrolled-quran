@@ -2,20 +2,24 @@ use std::borrow::Cow;
 
 use masonry::layout::{Dim, Length};
 use masonry::parley::{self, FontFamily, FontStack};
-use xilem::WidgetView;
+use masonry::properties::{Dimensions, Gap};
 use xilem::core::{Arg, Edit, MessageResult, View, ViewArgument};
 use xilem::style::{Padding, Style};
 use xilem::view::{
-    FlexExt, FlexSpacer, GridExt, button, flex_col, flex_row, grid, indexed_stack, slider,
-    text_button,
+    FlexExt, GridExt, GridItem, MainAxisAlignment, button, flex_col, flex_row, grid, indexed_stack,
+    resize_observer, slider, text_button,
 };
+use xilem::{TextAlign, WidgetView};
 
+#[allow(unused)]
 mod label;
 pub use label::*;
 
+#[allow(unused)]
 mod portal;
 pub use portal::*;
 
+#[allow(unused)]
 mod virtual_hscroll;
 pub use virtual_hscroll::*;
 
@@ -31,15 +35,15 @@ const DIGITALKHATT_NEW_MADINA: FontStack<'_> =
 const SURAH_NAMES: FontStack<'_> =
     FontStack::Single(FontFamily::Named(Cow::Borrowed("surah-name-v2")));
 
-const LINE_HEIGHT_FACTOR: f32 = 1.8;
+const LINE_HEIGHT_FACTOR: f32 = 2.;
 
 impl model::AppState {
     pub fn logic(&mut self) -> impl WidgetView<Edit<Self>> + use<> {
         indexed_stack((
             self.index_view(),
-            self.reader.as_mut().map(|(_, reader_state)| {
+            self.reader.as_mut().map(|(idx, reader_state)| {
                 reader_state
-                    .view(&self.user_data.preferences)
+                    .view(&self.user_data.preferences, &self.user_data.progress[*idx])
                     .map_state(|state: &mut Self, ()| {
                         let (idx, reader_state) = state.reader.as_mut().unwrap();
                         (
@@ -48,7 +52,11 @@ impl model::AppState {
                             &mut state.user_data.progress[*idx],
                         )
                     })
-                    .map_action(|state: &mut Self, ()| state.user_data.save())
+                    .map_action(|state: &mut Self, action| match action {
+                        ReaderAction::Save => state.user_data.save(),
+                        ReaderAction::Close => state.showing_index = true,
+                        ReaderAction::None => {}
+                    })
             }),
         ))
         .active(if self.reader.is_some() && !self.showing_index {
@@ -59,14 +67,56 @@ impl model::AppState {
     }
 
     pub fn index_view(&mut self) -> impl WidgetView<Edit<Self>> + use<> {
-        let n_columns = 6;
+        const MIN_CARD_WIDTH: f64 = 250.;
+        let n_columns = ((self.viewport_width / MIN_CARD_WIDTH) as i32).max(1);
+        let n_progress_rows = 2i32.max(-(-3i32.div_euclid(n_columns)));
 
-        let progress = self
+        const GAP: Length = Length::const_px(5.);
+        resize_observer(
+            Box::new(|state: &mut Self, masonry::kurbo::Size { width, .. }| {
+                state.viewport_width = width
+            }),
+            portal(
+                flex_col((
+                    grid(
+                        self.progress_cards(n_columns, n_progress_rows),
+                        n_columns,
+                        n_progress_rows,
+                    )
+                    .gap(GAP),
+                    grid(
+                        Self::surah_cards(n_columns),
+                        n_columns,
+                        -(-114i32.div_euclid(n_columns)),
+                    )
+                    .gap(GAP),
+                ))
+                .gap(GAP)
+                .width(Dim::Stretch),
+            )
+            .constrain_horizontal(true)
+            .padding(GAP.get()),
+        )
+        .dims(Dimensions::MAX)
+    }
+
+    fn progress_cards(
+        &mut self,
+        n_columns: i32,
+        n_progress_rows: i32,
+    ) -> Vec<GridItem<impl WidgetView<Edit<Self>> + use<>, Edit<Self>, ()>> {
+        let mut progress = self
             .user_data
             .progress
             .iter()
             .copied()
             .enumerate()
+            .collect::<Vec<_>>();
+        progress.sort_unstable_by_key(|(_, p)| std::cmp::Reverse(p.last_on()));
+        progress
+            .iter()
+            .copied()
+            .take((n_progress_rows * n_columns) as usize)
             .map(|(i, progress)| {
                 progress
                     .view(Box::new(move |state: &mut Self| {
@@ -75,17 +125,18 @@ impl model::AppState {
                     }))
                     .grid_pos(i as i32 % n_columns, i as i32 / n_columns)
             })
-            .collect::<Vec<_>>();
+            .collect()
+    }
 
-        let surah_cards: [_; 114] = std::array::from_fn(|i| {
+    fn surah_cards(
+        n_columns: i32,
+    ) -> [GridItem<impl WidgetView<Edit<Self>> + use<>, Edit<Self>, ()>; 114] {
+        std::array::from_fn(|i| {
+            let surah = (i + 1) as _;
             surah_card(
-                (i + 1) as _,
+                surah,
                 Box::new(move |state: &mut Self| {
-                    let new_progress = model::Progress {
-                        last_on: jiff::Timestamp::now(),
-                        surah: i as _,
-                        ayah: 0,
-                    };
+                    let new_progress = model::Progress::new(surah);
                     state.reader = Some((state.user_data.progress.len(), new_progress.reader()));
                     state.showing_index = false;
                     state.user_data.progress.push(new_progress);
@@ -93,21 +144,7 @@ impl model::AppState {
             )
             .boxed()
             .grid_pos(i as i32 % n_columns, i as i32 / n_columns)
-        });
-
-        const GAP: Length = Length::const_px(5.);
-        portal(
-            flex_col((
-                grid(progress, n_columns, 1).gap(GAP),
-                grid(surah_cards, n_columns, -(-114i32.div_euclid(n_columns)))
-                    .gap(GAP)
-                    .flex(1.),
-            ))
-            .gap(GAP)
-            .width(Dim::Stretch),
-        )
-        .constrain_horizontal(true)
-        .padding(GAP.get())
+        })
     }
 }
 
@@ -116,21 +153,7 @@ impl model::Progress {
         self,
         callback: F,
     ) -> impl WidgetView<State> + use<State, F> {
-        button(
-            flex_row((
-                flex_col((
-                    label(format!("surah{:03}", self.surah))
-                        .font(SURAH_NAMES)
-                        .text_size(30.)
-                        .flex(1.),
-                    label(model::data::SURAHS[self.surah as usize].name_en).flex(1.),
-                )),
-                label(format!("At ayah {}", self.ayah))
-                    .text_alignment(xilem::TextAlign::End)
-                    .flex(1.),
-            )),
-            callback,
-        )
+        generic_surah_card(self.surah(), format!("At ayah {}", self.ayah()), callback)
     }
 }
 
@@ -138,25 +161,32 @@ pub fn surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'st
     surah: u8,
     callback: F,
 ) -> impl WidgetView<State> {
+    generic_surah_card(
+        surah,
+        format!("{} Ayahs", model::data::SURAHS[surah as usize].ayahs),
+        callback,
+    )
+}
+
+pub fn generic_surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
+    surah: u8,
+    text: String,
+    callback: F,
+) -> impl WidgetView<State> {
     button(
         flex_row((
-            label(surah.to_string())
-                .text_size(24.)
-                .width(Length::px(60.)),
+            label(surah.to_string()).text_size(28.),
             flex_col((
                 label(format!("surah{surah:03}"))
                     .font(SURAH_NAMES)
-                    .text_size(30.)
-                    .flex(1.),
-                label(model::data::SURAHS[surah as usize].name_en).flex(1.),
-            )),
-            label(format!(
-                "{} Ayahs",
-                model::data::SURAHS[surah as usize].ayahs
+                    .text_size(32.),
+                label(model::data::SURAHS[surah as usize].name_en),
             ))
-            .text_alignment(xilem::TextAlign::End)
-            .flex(1.),
-        )),
+            .gap(Gap::ZERO),
+            label(text).text_alignment(TextAlign::End),
+        ))
+        .main_axis_alignment(MainAxisAlignment::SpaceBetween)
+        .gap(Gap::ZERO),
         callback,
     )
 }
@@ -167,12 +197,18 @@ type ReaderState = (
     Edit<model::Progress>,
 );
 
+pub enum ReaderAction {
+    Save,
+    Close,
+    None,
+}
+
 impl model::ScrollingReader {
-    pub fn ayah_view<State: ViewArgument>(
+    pub fn ayah_view<State: ViewArgument, Action: 'static>(
         &self,
         ayah: u16,
         font_size: f32,
-    ) -> impl WidgetView<State> + use<State> {
+    ) -> impl WidgetView<State, Action> + use<State, Action> {
         label(self.ayah_text(ayah))
             .font(DIGITALKHATT_NEW_MADINA.clone())
             .text_size(font_size)
@@ -181,62 +217,98 @@ impl model::ScrollingReader {
             .padding(Padding::left(font_size as f64 * 0.3))
     }
 
-    pub fn view(&mut self, pref: &model::Preferences) -> impl WidgetView<ReaderState> + use<> {
+    pub fn view(
+        &mut self,
+        pref: &model::Preferences,
+        progress: &model::Progress,
+    ) -> impl WidgetView<ReaderState, ReaderAction> + use<> {
+        tracing::debug!(ayah = progress.ayah(), "Reader Viewed");
+
         // font-size: 21.75px
         // line-height: 39.1167px
         // line-width: 381.117px
 
-        let autoscroll_velocity =
-            pref.font_size as f64 * 263. / pref.scroll_speed * self.is_scrolling as i8 as f64;
-        flex_col((
-            FlexSpacer::Flex(1.),
-            virtual_hscroll(
-                self.ayah_range(),
-                |(state, pref, _): Arg<ReaderState>, ayah| {
-                    state.ayah_view(ayah as _, pref.font_size)
+        let info = flex_col((flex_row((
+            flex_row(text_button("◀", |_| ReaderAction::Close)).flex(1.),
+            label(format!("surah{:03}", self.surah))
+                .font(SURAH_NAMES)
+                .text_size(32.),
+            label(progress.ayah().to_string())
+                .text_alignment(TextAlign::End)
+                .flex(1.),
+        )),))
+        .flex(1.);
+
+        let ayah_range = self.ayah_range();
+        let controls = flex_col((
+            slider(
+                ayah_range.start as _,
+                (ayah_range.end - 1) as _,
+                progress.ayah() as _,
+                |(state, _, progress): Arg<ReaderState>, i| {
+                    let ayah = i as _;
+                    progress.set_ayah(ayah);
+                    state.jump_to_ayah = Some(ayah);
+                    ReaderAction::Save
                 },
             )
+            .step(1.),
+            flex_row((
+                label(format!("{:1.1}", pref.scroll_speed)),
+                slider(
+                    90.,
+                    270.,
+                    pref.scroll_speed,
+                    |(_, pref, _): Arg<ReaderState>, s| {
+                        pref.scroll_speed = s;
+                        ReaderAction::Save
+                    },
+                )
+                .step(0.5),
+                text_button("⏯", |(state, ..): Arg<ReaderState>| {
+                    state.is_scrolling = !state.is_scrolling;
+                    ReaderAction::None
+                }),
+                label(format!("{:1.1}", pref.font_size)),
+                slider(
+                    24.,
+                    64.,
+                    pref.font_size as _,
+                    |(_, pref, _): Arg<ReaderState>, s| {
+                        pref.font_size = s as _;
+                        ReaderAction::Save
+                    },
+                )
+                .step(0.5),
+            ))
+            .main_axis_alignment(MainAxisAlignment::Center),
+        ))
+        .main_axis_alignment(MainAxisAlignment::End)
+        .flex(1.);
+
+        const PAGE_FONTSIZE_RATIO: f64 = 262.8393103448;
+        let autoscroll_velocity = pref.font_size as f64 * PAGE_FONTSIZE_RATIO / pref.scroll_speed
+            * self.is_scrolling as i8 as f64;
+
+        flex_col((
+            info,
+            virtual_hscroll(ayah_range, |(state, pref, _): Arg<ReaderState>, ayah| {
+                state.ayah_view(ayah as _, pref.font_size)
+            })
             .left_to_right(false)
             .autoscroll_velocity(autoscroll_velocity)
             .jump_to(self.jump_to_ayah.map(Into::into))
             .on_scroll(
                 |(state, _, progress): Arg<ReaderState>, std::ops::Range { start, .. }| {
-                    progress.ayah = start as _;
+                    progress.set_ayah(start as _);
                     state.jump_to_ayah = None;
-                    MessageResult::Action(())
+                    tracing::debug!(ayah = progress.ayah(), "set new ayah");
+                    MessageResult::Action(ReaderAction::Save)
                 },
             )
             .height(Length::px((pref.font_size * LINE_HEIGHT_FACTOR) as f64)),
-            flex_col((
-                FlexSpacer::Flex(1.),
-                flex_row((
-                    FlexSpacer::Flex(1.),
-                    label(format!("{:1.1}", pref.scroll_speed)),
-                    slider(
-                        90.,
-                        270.,
-                        pref.scroll_speed,
-                        |(_, pref, _): Arg<ReaderState>, s| {
-                            pref.scroll_speed = s;
-                        },
-                    ),
-                    text_button("⏯", |(state, ..): Arg<ReaderState>| {
-                        state.is_scrolling = !state.is_scrolling;
-                    }),
-                    label(format!("{:1.1}", pref.font_size)),
-                    slider(
-                        24.,
-                        64.,
-                        pref.font_size as _,
-                        |(_, pref, _): Arg<ReaderState>, s| {
-                            pref.font_size = s as _;
-                        },
-                    ),
-                    FlexSpacer::Flex(1.),
-                )),
-                FlexSpacer::Flex(1.),
-            ))
-            .flex(1.),
+            controls,
         ))
+        .padding(Padding::all(4.))
     }
 }
