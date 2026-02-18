@@ -15,6 +15,12 @@ Finally, the putting together of all these things has been the work of one Muham
 
 May Allah guide us to the righteous path and accept all our good deeds, a-meen.
 
+## Screenshots
+
+![Index page](screenshots/index_page.png)
+
+<video controls src="screenshots/reader_view.mp4" title="Reader view"></video>
+
 ---
 
 This software is licensed under [Apache-2.0](./LICENSE).
