@@ -22,52 +22,7 @@ pub enum PlaceOfRevelation {
     Madinah,
 }
 
-pub struct ScrollingReader {
-    pub surah: u8,
-
-    pub jump_to_ayah: Option<u16>,
-    pub is_scrolling: bool,
-}
-
-impl ScrollingReader {
-    pub fn ayah_text(&self, ayah: u16) -> &'static str {
-        data::AYAHS[if ayah == 0 {
-            0
-        } else {
-            (data::SURAHS[self.surah as usize].cumulative_ayahs + ayah) as usize
-        }]
-    }
-
-    pub fn ayah_range(&self) -> std::ops::Range<i64> {
-        (!self.has_basmalah() as _)..(data::SURAHS[self.surah as usize].ayahs + 1) as _
-    }
-
-    pub fn has_basmalah(&self) -> bool {
-        !matches!(self.surah, 1 | 9)
-    }
-}
-
-pub struct AppState {
-    pub user_data: UserData,
-
-    pub reader: Option<(usize, ScrollingReader)>,
-    pub showing_index: bool,
-    pub viewport_width: f64,
-}
-
-impl AppState {
-    pub fn load(user_data: UserData) -> Self {
-        AppState {
-            user_data,
-
-            reader: None,
-            showing_index: true,
-            viewport_width: 1000.,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct Progress {
     last_on: Timestamp,
     surah: u8,
@@ -109,7 +64,7 @@ impl Progress {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Preferences {
     pub font_size: f32,
 
@@ -117,7 +72,7 @@ pub struct Preferences {
     pub scroll_speed: f64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct UserData {
     pub preferences: Preferences,
     pub progress: Vec<Progress>,
@@ -158,27 +113,58 @@ impl UserData {
     }
 }
 
-#[test]
-fn gen_sample_progress() {
-    let sample_data = UserData {
-        preferences: Preferences {
-            font_size: 30.,
-            scroll_speed: 180.,
-        },
-        progress: vec![
-            Progress {
-                last_on: Timestamp::now(),
-                surah: 2,
-                ayah: 69,
-            },
-            Progress {
-                last_on: Timestamp::now(),
-                surah: 54,
-                ayah: 19,
-            },
-        ],
-    };
+pub struct ScrollingReader {
+    pub surah: u8,
 
-    let sample_ser = toml::to_string_pretty(&sample_data).unwrap();
-    eprintln!("{sample_ser}");
+    pub jump_to_ayah: Option<u16>,
+    pub is_scrolling: bool,
+}
+
+impl ScrollingReader {
+    pub fn ayah_text(&self, ayah: u16) -> &'static str {
+        data::AYAHS[if ayah == 0 {
+            0
+        } else {
+            (data::SURAHS[self.surah as usize].cumulative_ayahs + ayah) as usize
+        }]
+    }
+
+    pub fn ayah_range(&self) -> std::ops::Range<i64> {
+        (!self.has_basmalah() as _)..(data::SURAHS[self.surah as usize].ayahs + 1) as _
+    }
+
+    pub fn has_basmalah(&self) -> bool {
+        !matches!(self.surah, 1 | 9)
+    }
+}
+
+pub enum Page {
+    Index,
+    About,
+    Reader,
+}
+
+pub struct AppState {
+    pub user_data: UserData,
+
+    pub viewport_width: f64,
+    pub page: Page,
+    pub reader: Option<(usize, ScrollingReader)>,
+}
+
+impl AppState {
+    pub fn load(user_data: UserData) -> Self {
+        AppState {
+            user_data,
+
+            viewport_width: 1000.,
+            page: Page::Index,
+            reader: None,
+        }
+    }
+
+    pub fn set_reader(&mut self, idx: usize, progress: Progress) {
+        self.reader = Some((idx, progress.reader()));
+        self.page = Page::Reader;
+    }
 }

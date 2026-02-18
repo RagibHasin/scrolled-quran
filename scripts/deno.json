@@ -1,5 +1,0 @@
-{
-  "imports": {
-    "flatbuffers": "npm:flatbuffers@^25.9.23"
-  }
-}
