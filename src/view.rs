@@ -112,7 +112,7 @@ impl AppState {
                         n_progress_rows,
                     )
                     .gap(GAP),
-                    label("All surahs").text_alignment(TextAlign::Start),
+                    flex_row(label("All surahs")),
                     grid(
                         Self::surah_cards(n_columns),
                         n_columns,

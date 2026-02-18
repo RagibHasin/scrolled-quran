@@ -4,7 +4,7 @@ Alhamdulillah!
 
 All praise to Allah, Almighty, the Most Gracious, the Most Merciful.
 
-This piece of software would have not been possible without the ["DigitalKhatt New Madina"](https://digitalkhatt.org/about) font which is a work of Dr. Amine Anan.
+This piece of software would have not been possible without the ["DigitalKhatt New Madina"](https://digitalkhatt.org/about) font which is a work of Dr. Amine Anane.
 
 The verse text resources and other metadata are collected from the [Quranic Universal Library (QUL) Project](https://qul.tarteel.ai/) of Tarteel.ai.
 
