@@ -1,3 +1,5 @@
+use std::sync::OnceLock;
+
 use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 
@@ -65,7 +67,7 @@ impl AppState {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Progress {
     last_on: Timestamp,
     surah: u8,
@@ -107,7 +109,7 @@ impl Progress {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Preferences {
     pub font_size: f32,
 
@@ -115,21 +117,44 @@ pub struct Preferences {
     pub scroll_speed: f64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UserData {
     pub preferences: Preferences,
     pub progress: Vec<Progress>,
 }
 
+pub static USER_DATA_PATH: OnceLock<std::path::PathBuf> = OnceLock::new();
+
 impl UserData {
-    pub fn load_from_disk() -> anyhow::Result<Self> {
-        Ok(toml::from_slice::<UserData>(&std::fs::read(
-            "reading.toml",
-        )?)?)
+    pub fn save_path() -> &'static std::path::Path {
+        USER_DATA_PATH
+            .get_or_init(|| "reading.toml".into())
+            .as_path()
     }
 
-    pub fn save(&self) {
-        std::fs::write("reading.toml", toml::to_string_pretty(self).unwrap()).unwrap()
+    pub fn load_from_disk() -> anyhow::Result<Self> {
+        const NEW: UserData = UserData {
+            preferences: Preferences {
+                font_size: 36.,
+                scroll_speed: 180.,
+            },
+            progress: Vec::new(),
+        };
+
+        let save_path = Self::save_path();
+        if save_path.exists() {
+            Ok(toml::from_slice::<UserData>(&std::fs::read(save_path)?)?)
+        } else {
+            NEW.save()?;
+            Ok(NEW)
+        }
+    }
+
+    pub fn save(&self) -> anyhow::Result<()> {
+        Ok(std::fs::write(
+            Self::save_path(),
+            toml::to_string_pretty(self)?,
+        )?)
     }
 }
 

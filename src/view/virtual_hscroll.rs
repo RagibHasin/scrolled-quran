@@ -387,17 +387,18 @@ where
                 return MessageResult::Stale;
             }
         }
-        if let Some(action) = message.take_message::<widgets::VirtualScrollAction>() {
-            let scroll_result = (self.on_scroll)(app_state, action.target.clone());
-
-            // TODO: We should be able to rebuild here (we have the element)
-            // but we currently can't make a `ViewCtx`
-            view_state.pending_action = Some(*action);
-            // We need rebuild to be called now.
-            if matches!(scroll_result, MessageResult::Action(_)) {
-                scroll_result
-            } else {
-                MessageResult::RequestRebuild
+        if let Some(action) = message.take_message::<widgets::VirtualHScrollAction>() {
+            match *action {
+                widgets::VirtualHScrollAction::ActiveRange(action) => {
+                    // TODO: We should be able to rebuild here (we have the element)
+                    // but we currently can't make a `ViewCtx`
+                    view_state.pending_action = Some(action);
+                    // We need rebuild to be called now.
+                    MessageResult::RequestRebuild
+                }
+                widgets::VirtualHScrollAction::VisibleRange(range) => {
+                    (self.on_scroll)(app_state, range)
+                }
             }
         } else {
             tracing::error!(?message, "Wrong message type in VirtualScroll::message");

@@ -2577,6 +2577,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "scrolled-quran-android"
+version = "0.1.0"
+dependencies = [
+ "scrolled-quran",
+ "winit",
+]
+
+[[package]]
 name = "sctk-adwaita"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

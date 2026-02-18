@@ -1,8 +1,11 @@
 use std::borrow::Cow;
 
-use masonry::layout::{Dim, Length};
 use masonry::parley::{self, FontFamily, FontStack};
 use masonry::properties::{Dimensions, Gap};
+use masonry::{
+    layout::{Dim, Length},
+    properties::ThumbRadius,
+};
 use xilem::core::{Arg, Edit, MessageResult, View, ViewArgument};
 use xilem::style::{Padding, Style};
 use xilem::view::{
@@ -23,7 +26,7 @@ pub use portal::*;
 mod virtual_hscroll;
 pub use virtual_hscroll::*;
 
-use crate::model;
+use crate::model::{self, AppState};
 
 pub mod assets {
     pub const DIGITALKHATT_NEW_MADINA: &[u8] = include_bytes!("../assets/DigitalKhattV2.otf");
@@ -37,13 +40,13 @@ const SURAH_NAMES: FontStack<'_> =
 
 const LINE_HEIGHT_FACTOR: f32 = 2.;
 
-impl model::AppState {
+impl AppState {
     pub fn logic(&mut self) -> impl WidgetView<Edit<Self>> + use<> {
         indexed_stack((
             self.index_view(),
             self.reader.as_mut().map(|(idx, reader_state)| {
                 reader_state
-                    .view(&self.user_data.preferences, &self.user_data.progress[*idx])
+                    .view(&self.user_data.preferences, self.user_data.progress[*idx])
                     .map_state(|state: &mut Self, ()| {
                         let (idx, reader_state) = state.reader.as_mut().unwrap();
                         (
@@ -53,7 +56,7 @@ impl model::AppState {
                         )
                     })
                     .map_action(|state: &mut Self, action| match action {
-                        ReaderAction::Save => state.user_data.save(),
+                        ReaderAction::Save => state.user_data.save().unwrap(),
                         ReaderAction::Close => state.showing_index = true,
                         ReaderAction::None => {}
                     })
@@ -66,7 +69,7 @@ impl model::AppState {
         })
     }
 
-    pub fn index_view(&mut self) -> impl WidgetView<Edit<Self>> + use<> {
+    fn index_view(&self) -> impl WidgetView<Edit<Self>> + use<> {
         const MIN_CARD_WIDTH: f64 = 250.;
         let n_columns = ((self.viewport_width / MIN_CARD_WIDTH) as i32).max(1);
         let n_progress_rows = 2i32.max(-(-3i32.div_euclid(n_columns)));
@@ -79,7 +82,7 @@ impl model::AppState {
             portal(
                 flex_col((
                     grid(
-                        self.progress_cards(n_columns, n_progress_rows),
+                        self.user_data.progress_cards(n_columns, n_progress_rows),
                         n_columns,
                         n_progress_rows,
                     )
@@ -98,34 +101,6 @@ impl model::AppState {
             .padding(GAP.get()),
         )
         .dims(Dimensions::MAX)
-    }
-
-    fn progress_cards(
-        &mut self,
-        n_columns: i32,
-        n_progress_rows: i32,
-    ) -> Vec<GridItem<impl WidgetView<Edit<Self>> + use<>, Edit<Self>, ()>> {
-        let mut progress = self
-            .user_data
-            .progress
-            .iter()
-            .copied()
-            .enumerate()
-            .collect::<Vec<_>>();
-        progress.sort_unstable_by_key(|(_, p)| std::cmp::Reverse(p.last_on()));
-        progress
-            .iter()
-            .copied()
-            .take((n_progress_rows * n_columns) as usize)
-            .map(|(i, progress)| {
-                progress
-                    .view(Box::new(move |state: &mut Self| {
-                        state.reader = Some((i, progress.reader()));
-                        state.showing_index = false;
-                    }))
-                    .grid_pos(i as i32 % n_columns, i as i32 / n_columns)
-            })
-            .collect()
     }
 
     fn surah_cards(
@@ -148,8 +123,40 @@ impl model::AppState {
     }
 }
 
+impl model::UserData {
+    fn progress_cards(
+        &self,
+        n_columns: i32,
+        n_progress_rows: i32,
+    ) -> Vec<GridItem<impl WidgetView<Edit<AppState>> + use<>, Edit<AppState>, ()>> {
+        let mut progress = self
+            .progress
+            .iter()
+            .copied()
+            .enumerate()
+            .collect::<Vec<_>>();
+        progress.sort_unstable_by_key(|(_, p)| p.last_on());
+        progress
+            .into_iter()
+            .enumerate()
+            .take((n_progress_rows * n_columns) as usize)
+            .map(|(display_idx, (i, progress))| {
+                progress
+                    .view(Box::new(move |state: &mut AppState| {
+                        state.reader = Some((i, progress.reader()));
+                        state.showing_index = false;
+                    }))
+                    .grid_pos(
+                        display_idx as i32 % n_columns,
+                        display_idx as i32 / n_columns,
+                    )
+            })
+            .collect()
+    }
+}
+
 impl model::Progress {
-    pub fn view<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
+    fn view<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
         self,
         callback: F,
     ) -> impl WidgetView<State> + use<State, F> {
@@ -157,7 +164,7 @@ impl model::Progress {
     }
 }
 
-pub fn surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
+fn surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
     surah: u8,
     callback: F,
 ) -> impl WidgetView<State> {
@@ -168,7 +175,7 @@ pub fn surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'st
     )
 }
 
-pub fn generic_surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
+fn generic_surah_card<State: ViewArgument, F: Fn(Arg<'_, State>) + Send + Sync + 'static>(
     surah: u8,
     text: String,
     callback: F,
@@ -204,7 +211,7 @@ pub enum ReaderAction {
 }
 
 impl model::ScrollingReader {
-    pub fn ayah_view<State: ViewArgument, Action: 'static>(
+    fn ayah_view<State: ViewArgument, Action: 'static>(
         &self,
         ayah: u16,
         font_size: f32,
@@ -217,13 +224,11 @@ impl model::ScrollingReader {
             .padding(Padding::left(font_size as f64 * 0.3))
     }
 
-    pub fn view(
-        &mut self,
+    fn view(
+        &self,
         pref: &model::Preferences,
-        progress: &model::Progress,
+        progress: model::Progress,
     ) -> impl WidgetView<ReaderState, ReaderAction> + use<> {
-        tracing::debug!(ayah = progress.ayah(), "Reader Viewed");
-
         // font-size: 21.75px
         // line-height: 39.1167px
         // line-width: 381.117px
@@ -252,41 +257,49 @@ impl model::ScrollingReader {
                     ReaderAction::Save
                 },
             )
-            .step(1.),
+            .step(1.)
+            .prop(ThumbRadius(3.)),
             flex_row((
-                label(format!("{:1.1}", pref.scroll_speed)),
-                slider(
-                    90.,
-                    270.,
-                    pref.scroll_speed,
-                    |(_, pref, _): Arg<ReaderState>, s| {
-                        pref.scroll_speed = s;
-                        ReaderAction::Save
-                    },
-                )
-                .step(0.5),
+                flex_row((
+                    label(format!("{:1.1}", pref.scroll_speed)),
+                    slider(
+                        90.,
+                        270.,
+                        pref.scroll_speed,
+                        |(_, pref, _): Arg<ReaderState>, s| {
+                            pref.scroll_speed = s;
+                            ReaderAction::Save
+                        },
+                    )
+                    .step(0.5)
+                    .flex(1.),
+                ))
+                .flex(1.),
                 text_button("⏯", |(state, ..): Arg<ReaderState>| {
                     state.is_scrolling = !state.is_scrolling;
                     ReaderAction::None
                 }),
-                label(format!("{:1.1}", pref.font_size)),
-                slider(
-                    24.,
-                    64.,
-                    pref.font_size as _,
-                    |(_, pref, _): Arg<ReaderState>, s| {
-                        pref.font_size = s as _;
-                        ReaderAction::Save
-                    },
-                )
-                .step(0.5),
-            ))
-            .main_axis_alignment(MainAxisAlignment::Center),
+                flex_row((
+                    slider(
+                        24.,
+                        64.,
+                        pref.font_size as _,
+                        |(_, pref, _): Arg<ReaderState>, s| {
+                            pref.font_size = s as _;
+                            ReaderAction::Save
+                        },
+                    )
+                    .step(0.5)
+                    .flex(1.),
+                    label(format!("{:1.1}", pref.font_size)),
+                ))
+                .flex(1.),
+            )),
         ))
         .main_axis_alignment(MainAxisAlignment::End)
         .flex(1.);
 
-        const PAGE_FONTSIZE_RATIO: f64 = 262.8393103448;
+        const PAGE_FONTSIZE_RATIO: f64 = 262.5;
         let autoscroll_velocity = pref.font_size as f64 * PAGE_FONTSIZE_RATIO / pref.scroll_speed
             * self.is_scrolling as i8 as f64;
 
@@ -302,13 +315,12 @@ impl model::ScrollingReader {
                 |(state, _, progress): Arg<ReaderState>, std::ops::Range { start, .. }| {
                     progress.set_ayah(start as _);
                     state.jump_to_ayah = None;
-                    tracing::debug!(ayah = progress.ayah(), "set new ayah");
                     MessageResult::Action(ReaderAction::Save)
                 },
             )
             .height(Length::px((pref.font_size * LINE_HEIGHT_FACTOR) as f64)),
             controls,
         ))
-        .padding(Padding::all(4.))
+        .padding(16.)
     }
 }

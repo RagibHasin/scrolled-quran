@@ -3,6 +3,9 @@ name = "scrolled-quran"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+members = ["android"]
+
 [dependencies]
 accesskit = "0.21.1"
 anyhow = "1.0.101"
@@ -17,4 +20,6 @@ tracing = "0.1.44"
 xilem = { git = "https://github.com/linebender/xilem.git", version = "0.4.0" }
 
 [dev-dependencies]
-masonry = { git = "https://github.com/linebender/xilem.git", version = "0.4.0", features=["testing"] }
+masonry = { git = "https://github.com/linebender/xilem.git", version = "0.4.0", features = [
+  "testing"
+] }

@@ -1,2 +1,2 @@
 mod virtual_hscroll;
-pub use virtual_hscroll::{VirtualHScroll, VirtualScrollAction};
+pub use virtual_hscroll::{VirtualHScroll, VirtualHScrollAction};

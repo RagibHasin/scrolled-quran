@@ -1,0 +1,19 @@
+#[cfg(target_os = "android")]
+// Safety: We are following `android_activity`'s docs here
+#[expect(
+    unsafe_code,
+    reason = "We believe that there are no other declarations using this name in the compiled objects here"
+)]
+#[unsafe(no_mangle)]
+fn android_main(app: winit::platform::android::activity::AndroidApp) {
+    use winit::platform::android::EventLoopBuilderExtAndroid;
+
+    if let Some(path) = app.external_data_path() {
+        scrolled_quran::USER_DATA_PATH.set(path.join("reading.toml"));
+    }
+
+    let mut event_loop = winit::event_loop::EventLoop::with_user_event();
+    event_loop.with_android_app(app);
+
+    scrolled_quran::run(event_loop).expect("can create app");
+}
