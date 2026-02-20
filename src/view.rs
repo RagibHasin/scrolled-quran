@@ -231,13 +231,14 @@ impl model::ScrollingReader {
     fn ayah_view<State: 'static, Action: 'static>(
         &self,
         ayah: u16,
+        font_size: f32,
     ) -> impl WidgetView<State, Action> + use<State, Action> {
         label(self.ayah_text(ayah))
             .font(DIGITALKHATT_NEW_MADINA.clone())
-            .text_size(self.font_size)
+            .text_size(font_size)
             .enable_hinting(false)
             .line_height(parley::LineHeight::FontSizeRelative(LINE_HEIGHT_FACTOR))
-            .padding(style::Padding::left(self.font_size as f64 * 0.3))
+            .padding(style::Padding::left(font_size as f64 * 0.3))
     }
 
     fn view(
@@ -288,15 +289,9 @@ impl model::ScrollingReader {
                     ReaderAction::None
                 }),
                 flex_row((
-                    slider(
-                        24.,
-                        64.,
-                        pref.font_size as _,
-                        |(_, state): &mut ReaderState, s| {
-                            state.font_size = s as _;
-                            ReaderAction::SetFontSize(state.font_size)
-                        },
-                    )
+                    slider(24., 64., pref.font_size as _, |_, s| {
+                        ReaderAction::SetFontSize(s as _)
+                    })
                     .step(0.5)
                     .flex(1.),
                     label(format!("{:1.1}", pref.font_size)),
@@ -311,10 +306,11 @@ impl model::ScrollingReader {
         let autoscroll_velocity = pref.font_size as f64 * PAGE_FONTSIZE_RATIO / pref.scroll_speed
             * self.is_scrolling as i8 as f64;
 
+        let font_size = pref.font_size;
         flex_col((
             info,
-            virtual_hscroll(ayah_range, |(_, state): &mut ReaderState, ayah| {
-                state.ayah_view(ayah as _)
+            virtual_hscroll(ayah_range, move |(_, state): &mut ReaderState, ayah| {
+                state.ayah_view(ayah as _, font_size)
             })
             .left_to_right(false)
             .autoscroll_velocity(autoscroll_velocity)
