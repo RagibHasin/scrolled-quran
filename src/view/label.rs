@@ -6,7 +6,7 @@ use masonry::parley::style::{FontStack, FontWeight};
 use masonry::parley::{FontFamily, GenericFamily, LineHeight};
 use masonry::widgets;
 
-use xilem::core::{Arg, MessageCtx, MessageResult, Mut, View, ViewArgument, ViewMarker};
+use xilem::core::{MessageCtx, MessageResult, Mut, View, ViewMarker};
 use xilem::{Pod, TextAlign, ViewCtx};
 
 /// A non-interactive text element.
@@ -111,11 +111,11 @@ where
 }
 
 impl ViewMarker for Label {}
-impl<State: ViewArgument, Action> View<State, Action, ViewCtx> for Label {
+impl<State: 'static, Action> View<State, Action, ViewCtx> for Label {
     type Element = Pod<widgets::Label>;
     type ViewState = ();
 
-    fn build(&self, ctx: &mut ViewCtx, _: Arg<'_, State>) -> (Self::Element, Self::ViewState) {
+    fn build(&self, ctx: &mut ViewCtx, _: &mut State) -> (Self::Element, Self::ViewState) {
         let pod = ctx.create_pod(
             widgets::Label::new(self.label.clone())
                 .with_text_alignment(self.text_alignment)
@@ -134,7 +134,7 @@ impl<State: ViewArgument, Action> View<State, Action, ViewCtx> for Label {
         (): &mut Self::ViewState,
         _ctx: &mut ViewCtx,
         mut element: Mut<'_, Self::Element>,
-        _: Arg<'_, State>,
+        _: &mut State,
     ) {
         if prev.label != self.label {
             widgets::Label::set_text(&mut element, self.label.clone());
@@ -166,7 +166,7 @@ impl<State: ViewArgument, Action> View<State, Action, ViewCtx> for Label {
         (): &mut Self::ViewState,
         message: &mut MessageCtx,
         _element: Mut<'_, Self::Element>,
-        _app_state: Arg<'_, State>,
+        _app_state: &mut State,
     ) -> MessageResult<Action> {
         tracing::error!(
             ?message,

@@ -8,18 +8,18 @@ members = ["android"]
 
 [dependencies]
 accesskit = "0.21.1"
-anyhow = "1.0.101"
+anyhow = "1.0.102"
 color = "0.3.2"
 jiff = { version = "0.2.20", features = ["serde"] }
-masonry = { git = "https://github.com/linebender/xilem.git", rev = "73ef50a4f733b65079ebafabd0d2f05ce05d64af", version = "0.4.0" }
-masonry_winit = { git = "https://github.com/linebender/xilem.git", rev = "73ef50a4f733b65079ebafabd0d2f05ce05d64af", version = "0.4.0" }
+masonry = { git = "https://github.com/linebender/xilem.git", rev = "dbf014a", version = "0.4.0" }
+masonry_winit = { git = "https://github.com/linebender/xilem.git", rev = "dbf014a", version = "0.4.0" }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-toml = "1.0.1"
+toml = "1.0.3"
 tracing = "0.1.44"
-xilem = { git = "https://github.com/linebender/xilem.git", rev = "73ef50a4f733b65079ebafabd0d2f05ce05d64af", version = "0.4.0" }
+xilem = { git = "https://github.com/linebender/xilem.git", rev = "dbf014a", version = "0.4.0" }
 
 [dev-dependencies]
-masonry = { git = "https://github.com/linebender/xilem.git", rev = "73ef50a4f733b65079ebafabd0d2f05ce05d64af", version = "0.4.0", features = [
+masonry = { git = "https://github.com/linebender/xilem.git", rev = "dbf014a", version = "0.4.0", features = [
   "testing"
 ] }

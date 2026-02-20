@@ -187,9 +187,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.101"
+version = "1.0.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e0fee31ef5ed1ba1316088939cea399010ed7731dba877ed44aeb407a75ea"
+checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
 name = "anymap3"
@@ -492,9 +492,9 @@ dependencies = [
 
 [[package]]
 name = "bumpalo"
-version = "3.19.1"
+version = "3.20.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
+checksum = "5d20789868f4b01b2f2caec9f5c4e0213b41e3e5702a50157d699ae31ced2fcb"
 
 [[package]]
 name = "bytemuck"
@@ -1515,11 +1515,10 @@ dependencies = [
 [[package]]
 name = "linebender_include_doc_path"
 version = "0.1.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
 ]
 
 [[package]]
@@ -1579,7 +1578,7 @@ dependencies = [
 [[package]]
 name = "masonry"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "accesskit",
  "dpi",
@@ -1595,7 +1594,7 @@ dependencies = [
 [[package]]
 name = "masonry_core"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "accesskit",
  "anymap3",
@@ -1620,7 +1619,7 @@ dependencies = [
 [[package]]
 name = "masonry_testing"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "accesskit_consumer",
  "futures-intrusive",
@@ -1634,7 +1633,7 @@ dependencies = [
 [[package]]
 name = "masonry_winit"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "accesskit_winit",
  "copypasta",
@@ -2860,9 +2859,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.116"
+version = "2.0.117"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3df424c70518695237746f84cede799c9c58fcb37450d7b23716568cc8bc69cb"
+checksum = "e665b8803e7b1d2a727f4023456bbbbe74da67099c585258af0ad9c5013b9b99"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3051,9 +3050,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "1.0.1+spec-1.1.0"
+version = "1.0.3+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbe30f93627849fa362d4a602212d41bb237dc2bd0f8ba0b2ce785012e124220"
+checksum = "c7614eaf19ad818347db24addfa201729cf2a9b6fdfd9eb0ab870fcacc606c0c"
 dependencies = [
  "indexmap",
  "serde_core",
@@ -3096,9 +3095,9 @@ dependencies = [
 
 [[package]]
 name = "toml_parser"
-version = "1.0.8+spec-1.1.0"
+version = "1.0.9+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0742ff5ff03ea7e67c8ae6c93cac239e0d9784833362da3f9a9c1da8dfefcbdc"
+checksum = "702d4415e08923e7e1ef96cd5727c0dfed80b4d2fa25db9647fe5eb6f7c5a4c4"
 dependencies = [
  "winnow",
 ]
@@ -3200,7 +3199,7 @@ dependencies = [
 [[package]]
 name = "tree_arena"
 version = "0.2.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "hashbrown 0.16.1",
 ]
@@ -4427,7 +4426,7 @@ checksum = "bec9e4a500ca8864c5b47b8b482a73d62e4237670e5b5f1d6b9e3cae50f28f2b"
 [[package]]
 name = "xilem"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "masonry",
  "masonry_winit",
@@ -4442,7 +4441,7 @@ dependencies = [
 [[package]]
 name = "xilem_core"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "anymore",
  "hashbrown 0.16.1",
@@ -4452,7 +4451,7 @@ dependencies = [
 [[package]]
 name = "xilem_masonry"
 version = "0.4.0"
-source = "git+https://github.com/linebender/xilem.git?rev=73ef50a4f733b65079ebafabd0d2f05ce05d64af#73ef50a4f733b65079ebafabd0d2f05ce05d64af"
+source = "git+https://github.com/linebender/xilem.git?rev=dbf014a#dbf014ac7b39de04b2fe8584677b83c001039ae5"
 dependencies = [
  "masonry",
  "tokio",

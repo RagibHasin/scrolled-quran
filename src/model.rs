@@ -38,12 +38,14 @@ impl Progress {
         }
     }
 
-    pub fn reader(self) -> ScrollingReader {
+    pub fn reader(self, font_size: f32) -> ScrollingReader {
         ScrollingReader {
             surah: self.surah,
 
             jump_to_ayah: Some(self.ayah.saturating_sub(1)),
             is_scrolling: false,
+
+            font_size,
         }
     }
 
@@ -118,6 +120,8 @@ pub struct ScrollingReader {
 
     pub jump_to_ayah: Option<u16>,
     pub is_scrolling: bool,
+
+    pub font_size: f32,
 }
 
 impl ScrollingReader {
@@ -164,7 +168,13 @@ impl AppState {
     }
 
     pub fn set_reader(&mut self, idx: usize, progress: Progress) {
-        self.reader = Some((idx, progress.reader()));
+        self.reader = Some((idx, progress.reader(self.user_data.preferences.font_size)));
         self.page = Page::Reader;
+    }
+
+    pub fn selected_progress_mut(&mut self) -> Option<&mut Progress> {
+        self.reader
+            .as_ref()
+            .map(|(i, _)| &mut self.user_data.progress[*i])
     }
 }
