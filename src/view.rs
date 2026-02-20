@@ -7,17 +7,9 @@ use xilem::core::{MessageResult, View};
 use xilem::style::{self, Style as _};
 use xilem::view::{
     FlexExt, FlexSpacer, GridExt, GridItem, MainAxisAlignment, button, flex_col, flex_row, grid,
-    indexed_stack, prose, resize_observer, slider, text_button,
+    indexed_stack, label, portal, prose, resize_observer, slider, text_button,
 };
 use xilem::{TextAlign, WidgetView};
-
-#[allow(unused)]
-mod label;
-pub use label::*;
-
-#[allow(unused)]
-mod portal;
-pub use portal::*;
 
 #[allow(unused)]
 mod virtual_hscroll;
