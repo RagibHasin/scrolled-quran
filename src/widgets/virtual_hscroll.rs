@@ -850,6 +850,7 @@ impl Widget for VirtualHScroll {
         let mut item_crossing_end = self.active_range.start;
         let mut x = -width_before_anchor;
         let mut was_dense = true;
+        self.placed_items.clear();
         // We lay all of the active items out (even though some of them will be made inactive
         // after layout is done)
         for idx in self.active_range.clone() {
