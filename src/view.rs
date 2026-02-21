@@ -6,10 +6,10 @@ use masonry::properties::{Dimensions, Gap};
 use xilem::core::{MessageResult, View};
 use xilem::style::{self, Style as _};
 use xilem::view::{
-    FlexExt, FlexSpacer, GridExt, GridItem, MainAxisAlignment, button, flex_col, flex_row, grid,
-    indexed_stack, label, portal, prose, resize_observer, slider, text_button,
+    FlexExt, FlexSpacer, GridExt, GridItem, MainAxisAlignment, badge, badged, button, flex_col,
+    flex_row, grid, indexed_stack, label, portal, prose, resize_observer, slider, text_button,
 };
-use xilem::{TextAlign, WidgetView};
+use xilem::{Color, TextAlign, WidgetView};
 
 #[allow(unused)]
 mod virtual_hscroll;
@@ -93,9 +93,7 @@ impl AppState {
         let n_progress_rows = 2i32.max(-(-3i32.div_euclid(n_columns)));
 
         resize_observer(
-            Box::new(|state: &mut Self, masonry::kurbo::Size { width, .. }| {
-                state.viewport_width = width
-            }),
+            |state: &mut Self, masonry::kurbo::Size { width, .. }| state.viewport_width = width,
             portal(
                 flex_col((
                     flex_row((
@@ -129,15 +127,12 @@ impl AppState {
     fn surah_cards(n_columns: i32) -> [GridItem<impl WidgetView<Self> + use<>, Self, ()>; 114] {
         std::array::from_fn(|i| {
             let surah = (i + 1) as _;
-            surah_card(
-                surah,
-                Box::new(move |state: &mut Self| {
-                    let new_progress = model::Progress::new(surah);
-                    state.set_reader(state.user_data.progress.len(), new_progress);
-                    state.user_data.progress.push(new_progress);
-                }),
-            )
-            .boxed()
+            surah_card(surah, move |state: &mut Self| {
+                let new_progress = model::Progress::new(surah);
+                state.set_reader(state.user_data.progress.len(), new_progress);
+                state.user_data.progress.push(new_progress);
+                state.user_data.save().unwrap();
+            })
             .grid_pos(i as i32 % n_columns, i as i32 / n_columns)
         })
     }
@@ -155,31 +150,44 @@ impl model::UserData {
             .copied()
             .enumerate()
             .collect::<Vec<_>>();
-        progress.sort_unstable_by_key(|(_, p)| p.last_on());
+        progress.sort_unstable_by_key(|(_, p)| std::cmp::Reverse(p.last_on()));
         progress
             .into_iter()
             .enumerate()
             .take((n_progress_rows * n_columns) as usize)
-            .map(|(display_idx, (i, progress))| {
-                progress
-                    .view(Box::new(move |state: &mut AppState| {
-                        state.set_reader(i, progress);
-                    }))
-                    .grid_pos(
-                        display_idx as i32 % n_columns,
-                        display_idx as i32 / n_columns,
-                    )
+            .map(|(display_idx, (idx, progress))| {
+                badged(
+                    progress.view(idx),
+                    badge(
+                        button(label("❌").text_size(8.), move |state: &mut AppState| {
+                            state.reader = None;
+                            state.user_data.progress.remove(idx);
+                            state.user_data.save().unwrap();
+                        })
+                        .background_color(Color::TRANSPARENT)
+                        .active_background_color(Color::TRANSPARENT)
+                        .border(Color::TRANSPARENT, 0.)
+                        .height(Length::px(12.)),
+                    ),
+                )
+                .grid_pos(
+                    display_idx as i32 % n_columns,
+                    display_idx as i32 / n_columns,
+                )
             })
             .collect()
     }
 }
 
 impl model::Progress {
-    fn view<State: 'static, F: Fn(&mut State) + Send + Sync + 'static>(
-        self,
-        callback: F,
-    ) -> impl WidgetView<State> + use<State, F> {
-        generic_surah_card(self.surah(), format!("At ayah {}", self.ayah()), callback)
+    fn view(self, idx: usize) -> impl WidgetView<AppState> {
+        generic_surah_card(
+            self.surah(),
+            format!("At ayah {}", self.ayah()),
+            move |state: &mut AppState| {
+                state.set_reader(idx, self);
+            },
+        )
     }
 }
 
