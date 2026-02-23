@@ -129,6 +129,28 @@ impl ScrollingReader {
         }]
     }
 
+    pub fn is_ayah_on_page_boundary(&self, ayah: u16) -> Option<usize> {
+        if ayah == 0 {
+            self.is_ayah_on_page_boundary(1)
+        } else {
+            data::FIRST_AYAHS
+                .binary_search(&(self.surah, ayah))
+                .map(|p| p + 1)
+                .ok()
+        }
+    }
+
+    pub fn page_of(&self, ayah: u16) -> usize {
+        if ayah == 0 {
+            self.page_of(1)
+        } else {
+            match data::FIRST_AYAHS.binary_search(&(self.surah, ayah)) {
+                Ok(p) => p + 1,
+                Err(p) => p,
+            }
+        }
+    }
+
     pub fn ayah_range(&self) -> std::ops::Range<i64> {
         (!self.has_basmalah() as _)..(data::SURAHS[self.surah as usize].ayahs + 1) as _
     }

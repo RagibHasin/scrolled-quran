@@ -6,8 +6,8 @@ use masonry::properties::{Dimensions, Gap};
 use xilem::core::{MessageResult, View};
 use xilem::style::{self, Style as _};
 use xilem::view::{
-    FlexExt, FlexSpacer, GridExt, GridItem, MainAxisAlignment, badge, badged, button, flex_col,
-    flex_row, grid, indexed_stack, label, portal, prose, resize_observer, slider, text_button,
+    self, FlexExt, FlexSpacer, GridExt, GridItem, MainAxisAlignment, button, flex_col, flex_row,
+    grid, label, portal, slider, text_button,
 };
 use xilem::{Color, TextAlign, WidgetView};
 
@@ -28,13 +28,13 @@ const DIGITALKHATT_NEW_MADINA: FontStack<'_> =
 const SURAH_NAMES: FontStack<'_> =
     FontStack::Single(FontFamily::Named(Cow::Borrowed("surah-name-v2")));
 
-const LINE_HEIGHT_FACTOR: f32 = 2.;
+const LINE_HEIGHT_FACTOR: f32 = 2.22;
 
 const GAP: Length = Length::const_px(5.);
 
 impl AppState {
     pub fn logic(&mut self) -> impl WidgetView<Self> + use<> {
-        indexed_stack((
+        view::indexed_stack((
             self.index_view(),
             Self::about_view(),
             self.reader.as_mut().map(|(idx, reader_state)| {
@@ -80,7 +80,7 @@ impl AppState {
                     .weight(xilem::FontWeight::BOLD),
                 FlexSpacer::Flex(1.),
             )),
-            portal(prose(assets::ABOUT_TEXT).text_alignment(TextAlign::Center))
+            portal(view::prose(assets::ABOUT_TEXT).text_alignment(TextAlign::Center))
                 .constrain_horizontal(true),
         ))
         .gap(GAP)
@@ -92,7 +92,7 @@ impl AppState {
         let n_columns = ((self.viewport_width / MIN_CARD_WIDTH) as i32).max(1);
         let n_progress_rows = 2i32.max(-(-3i32.div_euclid(n_columns)));
 
-        resize_observer(
+        view::resize_observer(
             |state: &mut Self, masonry::kurbo::Size { width, .. }| state.viewport_width = width,
             portal(
                 flex_col((
@@ -124,7 +124,7 @@ impl AppState {
         .dims(Dimensions::MAX)
     }
 
-    fn surah_cards(n_columns: i32) -> [GridItem<impl WidgetView<Self> + use<>, Self, ()>; 114] {
+    fn surah_cards(n_columns: i32) -> [GridItem<impl WidgetView<Self>, Self, ()>; 114] {
         std::array::from_fn(|i| {
             let surah = (i + 1) as _;
             surah_card(surah, move |state: &mut Self| {
@@ -156,9 +156,9 @@ impl model::UserData {
             .enumerate()
             .take((n_progress_rows * n_columns) as usize)
             .map(|(display_idx, (idx, progress))| {
-                badged(
+                view::badged(
                     progress.view(idx),
-                    badge(
+                    view::badge(
                         button(label("❌").text_size(8.), move |state: &mut AppState| {
                             state.reader = None;
                             state.user_data.progress.remove(idx);
@@ -241,12 +241,24 @@ impl model::ScrollingReader {
         ayah: u16,
         font_size: f32,
     ) -> impl WidgetView<State, Action> + use<State, Action> {
-        label(self.ayah_text(ayah))
-            .font(DIGITALKHATT_NEW_MADINA.clone())
-            .text_size(font_size)
-            .enable_hinting(false)
-            .line_height(parley::LineHeight::FontSizeRelative(LINE_HEIGHT_FACTOR))
-            .padding(style::Padding::left(font_size as f64 * 0.3))
+        const PAGE_NO_HEIGHT: Length = Length::const_px(16.);
+        flex_col((
+            self.is_ayah_on_page_boundary(ayah).map_or_else(
+                || FlexSpacer::Fixed(PAGE_NO_HEIGHT).into_any_flex(),
+                |page| {
+                    label(page.to_string())
+                        .height(PAGE_NO_HEIGHT)
+                        .into_any_flex()
+                },
+            ),
+            label(self.ayah_text(ayah))
+                .font(DIGITALKHATT_NEW_MADINA.clone())
+                .text_size(font_size)
+                .enable_hinting(false)
+                .line_height(parley::LineHeight::FontSizeRelative(LINE_HEIGHT_FACTOR))
+                .padding(style::Padding::horizontal(font_size as f64 * 0.15)),
+        ))
+        .cross_axis_alignment(view::CrossAxisAlignment::End)
     }
 
     fn view(
@@ -258,12 +270,14 @@ impl model::ScrollingReader {
         // line-height: 39.1167px
         // line-width: 381.117px
 
+        let ayah = progress.ayah();
+        let page = self.page_of(ayah);
         let info = flex_col((flex_row((
             flex_row(text_button("◀", |_| ReaderAction::Close)).flex(1.),
             label(format!("surah{:03}", self.surah))
                 .font(SURAH_NAMES)
                 .text_size(32.),
-            label(progress.ayah().to_string())
+            label(format!("Ayah {ayah} : Page {page}"))
                 .text_alignment(TextAlign::End)
                 .flex(1.),
         )),))
@@ -274,7 +288,7 @@ impl model::ScrollingReader {
             slider(
                 ayah_range.start as _,
                 (ayah_range.end - 1) as _,
-                progress.ayah() as _,
+                ayah as _,
                 |(_, state): &mut ReaderState, i| {
                     let ayah = i as _;
                     state.jump_to_ayah = Some(ayah);
@@ -284,12 +298,13 @@ impl model::ScrollingReader {
             .step(1.),
             flex_row((
                 flex_row((
-                    label(format!("{:1.1}", pref.scroll_speed)),
+                    label("Speed"),
                     slider(90., 270., pref.scroll_speed, |_, s| {
                         ReaderAction::SetScrollSpeed(s)
                     })
                     .step(0.5)
                     .flex(1.),
+                    label(format!("{:1.1}s/page", pref.scroll_speed)),
                 ))
                 .flex(1.),
                 text_button("⏯", |(_, state): &mut ReaderState| {
@@ -297,12 +312,13 @@ impl model::ScrollingReader {
                     ReaderAction::None
                 }),
                 flex_row((
+                    label("Font size"),
                     slider(24., 64., pref.font_size as _, |_, s| {
                         ReaderAction::SetFontSize(s as _)
                     })
                     .step(0.5)
                     .flex(1.),
-                    label(format!("{:1.1}", pref.font_size)),
+                    label(format!("{:1.1}px", pref.font_size)),
                 ))
                 .flex(1.),
             )),
@@ -329,7 +345,9 @@ impl model::ScrollingReader {
                     MessageResult::Action(ReaderAction::SetAyah(start as _))
                 },
             )
-            .height(Length::px((pref.font_size * LINE_HEIGHT_FACTOR) as f64)),
+            .height(Length::px(
+                (pref.font_size * LINE_HEIGHT_FACTOR + 32.) as f64,
+            )),
             controls,
         ))
         .padding(16.)
