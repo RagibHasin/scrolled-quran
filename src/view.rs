@@ -10,10 +10,7 @@ use xilem::view::{
     grid, label, portal, slider, text_button,
 };
 use xilem::{Color, TextAlign, WidgetView};
-
-#[allow(unused)]
-mod virtual_hscroll;
-pub use virtual_hscroll::*;
+use xilem_understory_scroll::view::virtual_hscroll;
 
 use crate::model::{self, AppState};
 
@@ -41,7 +38,6 @@ impl AppState {
                 reader_state
                     .view(&self.user_data.preferences, self.user_data.progress[*idx])
                     .map_state(|state: &mut Self| state.reader.as_mut().unwrap())
-                    // ReaderAction::Save => state.user_data.save().unwrap(),
                     .map_action(|state: &mut Self, action| match action {
                         ReaderAction::SetAyah(ayah) => {
                             state.selected_progress_mut().unwrap().set_ayah(ayah);
@@ -238,9 +234,11 @@ pub enum ReaderAction {
 impl model::ScrollingReader {
     fn ayah_view<State: 'static, Action: 'static>(
         &self,
-        ayah: u16,
+        index: usize,
         font_size: f32,
     ) -> impl WidgetView<State, Action> + use<State, Action> {
+        let ayah = self.index_to_ayah(index);
+
         const PAGE_NO_HEIGHT: Length = Length::const_px(16.);
         flex_col((
             self.is_ayah_on_page_boundary(ayah).map_or_else(
@@ -284,14 +282,15 @@ impl model::ScrollingReader {
         .flex(1.);
 
         let ayah_range = self.ayah_range();
+        let ayahs_count = self.ayahs_count();
         let controls = flex_col((
             slider(
-                ayah_range.start as _,
-                (ayah_range.end - 1) as _,
+                *ayah_range.start() as _,
+                (ayah_range.end() - 1) as _,
                 ayah as _,
                 |(_, state): &mut ReaderState, i| {
                     let ayah = i as _;
-                    state.jump_to_ayah = Some(ayah);
+                    state.jump_to_ayah_index = Some(state.ayah_to_index(ayah));
                     ReaderAction::SetAyah(ayah)
                 },
             )
@@ -333,16 +332,18 @@ impl model::ScrollingReader {
         let font_size = pref.font_size;
         flex_col((
             info,
-            virtual_hscroll(ayah_range, move |(_, state): &mut ReaderState, ayah| {
-                state.ayah_view(ayah as _, font_size)
+            virtual_hscroll(ayahs_count, move |(_, state): &mut ReaderState, index| {
+                state.ayah_view(index, font_size)
             })
             .left_to_right(false)
             .autoscroll_velocity(autoscroll_velocity)
-            .jump_to(self.jump_to_ayah.map(Into::into))
+            .jump_to(self.jump_to_ayah_index)
             .on_scroll(
-                |(_, state): &mut ReaderState, std::ops::Range { start, .. }| {
-                    state.jump_to_ayah = None;
-                    MessageResult::Action(ReaderAction::SetAyah(start as _))
+                move |(_, state): &mut ReaderState, std::ops::Range { start, end }| {
+                    state.jump_to_ayah_index = None;
+                    MessageResult::Action(ReaderAction::SetAyah(
+                        state.index_to_ayah(if end == ayahs_count { end } else { start }),
+                    ))
                 },
             )
             .height(Length::px(

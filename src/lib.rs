@@ -5,8 +5,6 @@ use xilem::{Blob, EventLoopBuilder, WindowOptions, Xilem};
 mod model;
 mod view;
 
-pub mod widgets;
-
 use crate::model::AppState;
 
 pub use model::USER_DATA_PATH;

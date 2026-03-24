@@ -39,12 +39,14 @@ impl Progress {
     }
 
     pub fn reader(self) -> ScrollingReader {
-        ScrollingReader {
+        let mut r = ScrollingReader {
             surah: self.surah,
 
-            jump_to_ayah: Some(self.ayah.saturating_sub(1)),
+            jump_to_ayah_index: None,
             is_scrolling: false,
-        }
+        };
+        r.jump_to_ayah_index = Some(r.ayah_to_index(self.ayah));
+        r
     }
 
     pub fn last_on(&self) -> Timestamp {
@@ -116,7 +118,7 @@ impl UserData {
 pub struct ScrollingReader {
     pub surah: u8,
 
-    pub jump_to_ayah: Option<u16>,
+    pub jump_to_ayah_index: Option<usize>,
     pub is_scrolling: bool,
 }
 
@@ -151,8 +153,24 @@ impl ScrollingReader {
         }
     }
 
-    pub fn ayah_range(&self) -> std::ops::Range<i64> {
-        (!self.has_basmalah() as _)..(data::SURAHS[self.surah as usize].ayahs + 1) as _
+    pub fn ayah_range(&self) -> std::ops::RangeInclusive<u16> {
+        (!self.has_basmalah() as _)..=data::SURAHS[self.surah as usize].ayahs
+    }
+
+    pub fn ayahs_count(&self) -> usize {
+        data::SURAHS[self.surah as usize].ayahs as usize + self.has_basmalah() as usize
+    }
+
+    pub fn index_to_ayah(&self, index: usize) -> u16 {
+        (if self.has_basmalah() {
+            index
+        } else {
+            index + 1
+        }) as _
+    }
+
+    pub fn ayah_to_index(&self, ayah: u16) -> usize {
+        (if self.has_basmalah() { ayah } else { ayah - 1 }) as _
     }
 
     pub fn has_basmalah(&self) -> bool {
