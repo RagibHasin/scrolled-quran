@@ -13,15 +13,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: windows-latest
-            artifact_name: scrolled_quran_windows
-            artifact_paths: target/release/scrolled-quran.exe
-          - os: ubuntu-latest
-            artifact_name: scrolled_quran_linux
-            artifact_paths: target/release/scrolled-quran
           - os: macos-latest
-            artifact_name: scrolled_quran_macos
-            artifact_paths: target/release/scrolled-quran
+            artifact_path: target/release/scrolled-quran
+          - os: ubuntu-latest
+            artifact_path: target/release/scrolled-quran
+          - os: windows-latest
+            artifact_path: target/release/scrolled-quran.exe
 
     steps:
     - uses: actions/checkout@v6
@@ -38,8 +35,8 @@ jobs:
 
     - uses: actions/upload-artifact@v6
       with:
-        name: ${{ matrix.artifact_name }}
-        path: ${{ matrix.artifact_paths }}
+        name: ${{ matrix.os }}
+        path: ${{ matrix.artifact_path }}
         compression-level: 9
         if-no-files-found: error
 
@@ -64,6 +61,18 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
 
+    - name: Compress artifacts
+      run: |
+        cd artifacts
+        mkdir compressed
+        cd compressed
+        zip -j -9 scrolled-quran-aarch64-aarch64-apple-darwin.zip ../macos-latest/scrolled-quran
+        tar -cf scrolled-quran-x86_64-unknown-linux-gnu.tar.xz -I 'xz -9' ../ubuntu-latest/scrolled-quran
+        zip -j -9 scrolled-quran-x86_64-pc-windows-msvc.zip ../windows-latest/scrolled-quran.exe
+
+    - name: Display structure
+      run: ls -R artifacts
+    
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
@@ -71,4 +80,4 @@ jobs:
         name: Scrolled Quran Preview
         draft: false
         prerelease: true
-        files: artifacts/**/*
+        files: artifacts/compressed/*
