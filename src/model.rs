@@ -16,6 +16,21 @@ pub struct SurahInfo {
     pub revealed_in: PlaceOfRevelation,
 }
 
+pub fn surah_needs_basmalah(surah: u8) -> bool {
+    !matches!(surah, 1 | 9)
+}
+
+pub fn page_of(surah: u8, ayah: u16) -> usize {
+    if ayah == 0 {
+        page_of(surah, 1)
+    } else {
+        match data::FIRST_AYAHS.binary_search(&(surah, ayah)) {
+            Ok(p) => p + 1,
+            Err(p) => p,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub enum PlaceOfRevelation {
     Makkah,
@@ -34,7 +49,7 @@ impl Progress {
         Progress {
             last_on: Timestamp::now(),
             surah,
-            ayah: 0,
+            ayah: if surah_needs_basmalah(surah) { 0 } else { 1 },
         }
     }
 
@@ -142,27 +157,16 @@ impl ScrollingReader {
         }
     }
 
-    pub fn page_of(&self, ayah: u16) -> usize {
-        if ayah == 0 {
-            self.page_of(1)
-        } else {
-            match data::FIRST_AYAHS.binary_search(&(self.surah, ayah)) {
-                Ok(p) => p + 1,
-                Err(p) => p,
-            }
-        }
-    }
-
     pub fn ayah_range(&self) -> std::ops::RangeInclusive<u16> {
-        (!self.has_basmalah() as _)..=data::SURAHS[self.surah as usize].ayahs
+        (!surah_needs_basmalah(self.surah) as _)..=data::SURAHS[self.surah as usize].ayahs
     }
 
     pub fn ayahs_count(&self) -> usize {
-        data::SURAHS[self.surah as usize].ayahs as usize + self.has_basmalah() as usize
+        data::SURAHS[self.surah as usize].ayahs as usize + surah_needs_basmalah(self.surah) as usize
     }
 
     pub fn index_to_ayah(&self, index: usize) -> u16 {
-        (if self.has_basmalah() {
+        (if surah_needs_basmalah(self.surah) {
             index
         } else {
             index + 1
@@ -170,11 +174,11 @@ impl ScrollingReader {
     }
 
     pub fn ayah_to_index(&self, ayah: u16) -> usize {
-        (if self.has_basmalah() { ayah } else { ayah - 1 }) as _
-    }
-
-    pub fn has_basmalah(&self) -> bool {
-        !matches!(self.surah, 1 | 9)
+        (if surah_needs_basmalah(self.surah) {
+            ayah
+        } else {
+            ayah - 1
+        }) as _
     }
 }
 

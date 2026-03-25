@@ -4700,7 +4700,7 @@ dependencies = [
 [[package]]
 name = "xilem_understory_scroll"
 version = "0.1.0"
-source = "git+https://github.com/RagibHasin/xilem_understory_scroll.git?rev=d6533e9426bc5dc763b73994bb246cccd3c3cb88#d6533e9426bc5dc763b73994bb246cccd3c3cb88"
+source = "git+https://github.com/RagibHasin/xilem_understory_scroll.git?rev=c22607421f363da54db762ccc702b27b1f786ff0#c22607421f363da54db762ccc702b27b1f786ff0"
 dependencies = [
  "accesskit",
  "color",

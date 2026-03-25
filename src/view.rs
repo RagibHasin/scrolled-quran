@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use masonry::layout::{Dim, Length};
 use masonry::parley::{self, FontFamily, FontStack};
 use masonry::properties::{Dimensions, Gap};
-use xilem::core::{MessageResult, View};
+use xilem::core::{MessageResult, View, one_of::OneOf3};
 use xilem::style::{self, Style as _};
 use xilem::view::{
     self, FlexExt, FlexSpacer, GridExt, GridItem, MainAxisAlignment, button, flex_col, flex_row,
@@ -31,37 +31,34 @@ const GAP: Length = Length::const_px(5.);
 
 impl AppState {
     pub fn logic(&mut self) -> impl WidgetView<Self> + use<> {
-        view::indexed_stack((
-            self.index_view(),
-            Self::about_view(),
-            self.reader.as_mut().map(|(idx, reader_state)| {
-                reader_state
-                    .view(&self.user_data.preferences, self.user_data.progress[*idx])
-                    .map_state(|state: &mut Self| state.reader.as_mut().unwrap())
-                    .map_action(|state: &mut Self, action| match action {
-                        ReaderAction::SetAyah(ayah) => {
-                            state.selected_progress_mut().unwrap().set_ayah(ayah);
-                            state.user_data.save().unwrap()
-                        }
-                        ReaderAction::SetScrollSpeed(s) => {
-                            state.user_data.preferences.scroll_speed = s;
-                            state.user_data.save().unwrap()
-                        }
-                        ReaderAction::SetFontSize(s) => {
-                            state.user_data.preferences.font_size = s;
-                            state.user_data.save().unwrap()
-                        }
-                        ReaderAction::Close => state.page = model::Page::Index,
-                        ReaderAction::None => {}
-                    })
-            }),
-        ))
-        .active(match self.page {
-            model::Page::Index => 0,
-            model::Page::About => 1,
-            model::Page::Reader if self.reader.is_none() => 0,
-            model::Page::Reader => 2,
-        })
+        match self.page {
+            model::Page::Index => OneOf3::A(self.index_view()),
+            model::Page::About => OneOf3::B(Self::about_view()),
+            model::Page::Reader => match self.reader.as_mut() {
+                None => OneOf3::A(self.index_view()),
+                Some((idx, reader_state)) => OneOf3::C(
+                    reader_state
+                        .view(&self.user_data.preferences, self.user_data.progress[*idx])
+                        .map_state(|state: &mut Self| state.reader.as_mut().unwrap())
+                        .map_action(|state: &mut Self, action| match action {
+                            ReaderAction::SetAyah(ayah) => {
+                                state.selected_progress_mut().unwrap().set_ayah(ayah);
+                                state.user_data.save().unwrap()
+                            }
+                            ReaderAction::SetScrollSpeed(s) => {
+                                state.user_data.preferences.scroll_speed = s;
+                                state.user_data.save().unwrap()
+                            }
+                            ReaderAction::SetFontSize(s) => {
+                                state.user_data.preferences.font_size = s;
+                                state.user_data.save().unwrap()
+                            }
+                            ReaderAction::Close => state.page = model::Page::Index,
+                            ReaderAction::None => {}
+                        }),
+                ),
+            },
+        }
     }
 
     fn about_view() -> impl WidgetView<Self> {
@@ -179,7 +176,11 @@ impl model::Progress {
     fn view(self, idx: usize) -> impl WidgetView<AppState> {
         generic_surah_card(
             self.surah(),
-            format!("At ayah {}", self.ayah()),
+            format!(
+                "At ayah {}\nPage {}",
+                self.ayah(),
+                model::page_of(self.surah(), self.ayah())
+            ),
             move |state: &mut AppState| {
                 state.set_reader(idx, self);
             },
@@ -269,7 +270,7 @@ impl model::ScrollingReader {
         // line-width: 381.117px
 
         let ayah = progress.ayah();
-        let page = self.page_of(ayah);
+        let page = model::page_of(self.surah, ayah);
         let info = flex_col((flex_row((
             flex_row(text_button("◀", |_| ReaderAction::Close)).flex(1.),
             label(format!("surah{:03}", self.surah))
@@ -335,6 +336,7 @@ impl model::ScrollingReader {
             virtual_hscroll(ayahs_count, move |(_, state): &mut ReaderState, index| {
                 state.ayah_view(index, font_size)
             })
+            .start_end(0.5, 0.5)
             .left_to_right(false)
             .autoscroll_velocity(autoscroll_velocity)
             .jump_to(self.jump_to_ayah_index)
