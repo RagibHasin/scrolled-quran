@@ -1,0 +1,72 @@
+name: Rust CI/CD
+
+on:
+  push:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: scrolled_quran_windows
+            artifact_paths: target/release/scrolled_quran.exe
+          - os: ubuntu-latest
+            artifact_name: scrolled_quran_linux
+            artifact_paths: target/release/scrolled_quran
+          - os: macos-latest
+            artifact_name: scrolled_quran_macos
+            artifact_paths: target/release/scrolled_quran
+
+    steps:
+    - uses: actions/checkout@v6
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+      
+    # - name: Run tests
+    #   run: cargo test --verbose
+
+    - name: Build release
+      run: cargo build --release --verbose
+
+    - uses: actions/upload-artifact@v6
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: ${{ matrix.artifact_paths }}
+        compression-level: 9
+        if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    
+    steps:
+    - uses: actions/checkout@v6    
+    - uses: actions/download-artifact@v7
+      with:
+        path: artifacts
+    
+    - name: Display structure
+      run: ls -R artifacts
+    
+    - name: Re-Tag preview
+      run: gh release delete preview --yes || true
+      env:
+        GH_TOKEN: ${{ github.token }}
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: preview
+        name: Scrolled Quran Preview
+        draft: false
+        prerelease: true
+        files: artifacts/**/*
