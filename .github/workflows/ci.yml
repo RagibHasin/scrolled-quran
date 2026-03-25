@@ -15,13 +15,13 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: scrolled_quran_windows
-            artifact_paths: target/release/scrolled_quran.exe
+            artifact_paths: target/release/scrolled-quran.exe
           - os: ubuntu-latest
             artifact_name: scrolled_quran_linux
-            artifact_paths: target/release/scrolled_quran
+            artifact_paths: target/release/scrolled-quran
           - os: macos-latest
             artifact_name: scrolled_quran_macos
-            artifact_paths: target/release/scrolled_quran
+            artifact_paths: target/release/scrolled-quran
 
     steps:
     - uses: actions/checkout@v6
@@ -29,12 +29,9 @@ jobs:
       
     - name: Install Linux dependencies
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install -y pkg-config clang libwayland-dev libxkbcommon-x11-dev libvulkan-dev
+      run: sudo apt update -y && sudo apt install -y pkg-config clang libwayland-dev libxkbcommon-x11-dev libvulkan-dev libfontconfig1-dev
 
     - uses: Swatinem/rust-cache@v2
-      
-    # - name: Run tests
-    #   run: cargo test --verbose
 
     - name: Build release
       run: cargo build --release --verbose
